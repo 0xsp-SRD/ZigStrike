@@ -4,7 +4,8 @@ pub export fn DllMain(hInstance: windows.HINSTANCE, dwReason: DWORD, lpReserved:
     _ = lpReserved;
     switch (dwReason) {
         win32.DLL_PROCESS_ATTACH => {
-           // Sandbox protection option enabled? 
+           // Sandbox protection option enabled?
+           // enable runtime protection
             local_map_injection(); 
         },
         win32.DLL_PROCESS_DETACH => {},
@@ -22,7 +23,8 @@ pub export fn DllMain(hInstance: windows.HINSTANCE, dwReason: DWORD, lpReserved:
     _ = lpReserved;
     switch (dwReason) {
         win32.DLL_PROCESS_ATTACH => {
-         // Sandbox protection option enabled? 
+         // Sandbox protection option enabled?
+         // enable runtime protection
             createThreadAndExecute(sampleProcedure);
         },
         win32.DLL_PROCESS_DETACH => {},
@@ -39,7 +41,8 @@ pub export fn DllMain(hInstance: windows.HINSTANCE, dwReason: DWORD, lpReserved:
     _ = lpReserved;
     switch (dwReason) {
         win32.DLL_PROCESS_ATTACH => {
-            // Sandbox protection option enabled? 
+            // Sandbox protection option enabled?
+            // enable runtime protection
             remote_thread_injection();
           
         },
@@ -57,7 +60,8 @@ pub export fn DllMain(hInstance: windows.HINSTANCE, dwReason: DWORD, lpReserved:
     _ = lpReserved;
     switch (dwReason) {
         win32.DLL_PROCESS_ATTACH => {
-            // Sandbox protection option enabled? 
+            // Sandbox protection option enabled?
+            // enable runtime protection
             remote_map_injection();
           
         },
@@ -67,3 +71,25 @@ pub export fn DllMain(hInstance: windows.HINSTANCE, dwReason: DWORD, lpReserved:
     return windows.TRUE;
 }
 // END OF REMOTE MAPPING INJECTION
+
+// EARLY CASCADE INJECTION
+pub export fn DllMain(hInstance: windows.HINSTANCE, dwReason: DWORD, lpReserved: ?LPVOID) callconv(WINAPI) BOOL {
+    _ = hInstance;
+    _ = lpReserved;
+    switch (dwReason) {
+        win32.DLL_PROCESS_ATTACH => {
+            // Sandbox protection option enabled?
+            // enable runtime protection    
+            run_cascade_injection();
+        },
+        win32.DLL_PROCESS_DETACH => {},
+        else => {},
+    }
+    return windows.TRUE;
+}
+// END OF EARLY CASCADE INJECTION
+
+
+
+
+

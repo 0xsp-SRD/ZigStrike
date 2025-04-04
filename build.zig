@@ -8,9 +8,8 @@ pub fn build(b: *std.Build) void {
         // .preferred_optimize_mode = .ReleaseSmall,
     });
 
-    // Create a lib artifact for Windows
     const lib = b.addSharedLibrary(.{
-        .name = "excel_thread_demo",
+        .name = "ZS",
         .root_source_file = b.path("src/main.zig"),
         .target = b.standardTargetOptions(.{
             .default_target = .{
@@ -26,13 +25,9 @@ pub fn build(b: *std.Build) void {
     lib.linkage = .dynamic;
     lib.linkSystemLibrary("kernel32");
     lib.linkSystemLibrary("user32");
-    lib.linker_allow_shlib_undefined = true;
-    lib.defineCMacro("EXPORT_EXCEL_FUNCTIONS", "1");
-
-    // Add include paths
-    lib.addIncludePath(b.path("src/dep/"));
     lib.linkLibC();
 
-    // This puts the output file in zig-out/lib
+    lib.use_llvm = true;
+
     b.installArtifact(lib);
 }

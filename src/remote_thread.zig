@@ -37,8 +37,8 @@ pub fn suspended_Process(lp_process_name: ?[*:0]u16, dwProcId: *DWORD, h_process
     h_process.* = PI.hProcess;
     h_thread.* = PI.hThread;
 
-    defer _ = kernel32.CloseHandle(PI.hProcess);
-    defer _ = kernel32.CloseHandle(PI.hThread);
+    defer _ = windows.CloseHandle(PI.hProcess);
+    defer _ = windows.CloseHandle(PI.hThread);
 
     if (dwProcId.* != 0 and h_process.* != windows.INVALID_HANDLE_VALUE and h_thread.* != windows.INVALID_HANDLE_VALUE) {
         return true;

