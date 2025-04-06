@@ -550,9 +550,7 @@ h1 {
                 2. Create a new thread in the new process.&#10;
                 3. Redirect the thread's execution to the shellcode.">Remote Thread</label>
                 <input type="radio" id="early_cascade" name="injection_method" value="early_cascade">
-                <label for="early_cascade" data-tooltip="1. Create a new process in the target machine.&#10;
-                2. Create a new thread in the new process.&#10;
-                3. Redirect the thread's execution to the shellcode.">Early Cascade</label>
+                <label for="early_cascade" data-tooltip="injecting and executing code in the early stages of process creation before loading EDRs for their user mode detection measures. EarlyCascade technique forces enabling the Shim engine, allowing to hijack a Shim engine callback.">Early Cascade</label>
             </div>
             
             <div id="process-input" class="process-input" style="display: none;">
