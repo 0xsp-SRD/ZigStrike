@@ -75,42 +75,97 @@ const user32 = struct { // you can do struct and declare extern API like this.
 // change this to true to enable debug mode
 var StatusDebug = core.isDebug.false;
 
-// convert the string to a wide string UTF16-L in comptime
+// convert the string to a wide string UTF16-L in comptime and enahnce the performance by processing the large strings in smaller chunks.
+//fn ComptimeWS(comptime str: []const u8) []const u16 {
+//    @setEvalBranchQuota(100_000_000);
+//    comptime {
+//        if (str.len > 32768) {
+//            const result = blk: {
+//                var arr: [str.len * 2]u16 = undefined;
+//                var i: usize = 0;
+//                var arr_index: usize = 0;
+//                while (i < str.len) {
+//                    const chunk_end = @min(i + 32768, str.len);
+//                    const chunk = str[i..chunk_end];
+//                    const wide_chunk = std.unicode.utf8ToUtf16LeStringLiteral(chunk);
+//                    for (wide_chunk) |wide_char| {
+//                        arr[arr_index] = wide_char;
+//                        arr_index += 1;
+//                    }
+//                    i = chunk_end;
+//                }
+//                // Create a new array with the exact size needed
+//                var final_arr: [arr_index]u16 = undefined;
+//                @memcpy(final_arr[0..arr_index], arr[0..arr_index]);
+//                break :blk final_arr;
+//              };
+//            return &result;
+//        } else {
+//            return std.unicode.utf8ToUtf16LeStringLiteral(str);
+//        }
+//    }
+//}
+
 fn ComptimeWS(comptime str: []const u8) []const u16 {
     @setEvalBranchQuota(100_000_000);
     comptime {
-        var wide_str = std.unicode.utf8ToUtf16LeStringLiteral(str);
-        _ = &wide_str; // ignore
-        return wide_str;
+        if (str.len > 32768) {
+            const result = blk: {
+                // Pre-allocate array with maximum possible size
+                var arr: [str.len * 2]u16 = undefined;
+                var arr_index: usize = 0;
+                var i: usize = 0;
+
+                while (i < str.len) {
+                    const chunk_end = @min(i + 32768, str.len);
+                    const chunk = str[i..chunk_end];
+
+                    // Direct conversion without intermediate allocations, UTF-8 us a variable length encoding scheme(1-4 bytes per character)
+                    // UTF-16 is a fixed length encoding scheme(2 bytes per character)
+                    // so we need to convert the UTF-8 to UTF-16
+                    var j: usize = 0;
+                    while (j < chunk.len) {
+                        const c = chunk[j];
+                        if (c < 0x80) { // this to check if the byte is an ASCII character
+                            // ASCII - direct conversion stage
+                            arr[arr_index] = c;
+                            arr_index += 1;
+                            j += 1;
+                        } else if (c < 0xE0) { // this to check if the byte is a 2-byte UTF-8 character
+                            // 2-byte UTF-8
+                            if (j + 1 >= chunk.len) break;
+                            const c2 = chunk[j + 1];
+                            arr[arr_index] = (@as(u16, c & 0x1F) << 6) | (c2 & 0x3F);
+                            arr_index += 1;
+                            j += 2;
+                        } else { // this to check if the byte is a 3-byte UTF-8 character
+                            // 3-byte UTF-8
+                            if (j + 2 >= chunk.len) break;
+                            const c2 = chunk[j + 1];
+                            const c3 = chunk[j + 2];
+                            arr[arr_index] = (@as(u16, c & 0x0F) << 12) | (@as(u16, c2 & 0x3F) << 6) | (c3 & 0x3F);
+                            arr_index += 1;
+                            j += 3;
+                        }
+                    }
+                    i = chunk_end;
+                }
+                var final_arr: [arr_index]u16 = undefined;
+                @memcpy(final_arr[0..arr_index], arr[0..arr_index]);
+                break :blk final_arr;
+            };
+            return &result;
+        } else {
+            return std.unicode.utf8ToUtf16LeStringLiteral(str);
+        }
     }
 }
 
 // struct to hold encoded shellcode into several parts.
-const SH = struct {
-    const b1 = ComptimeWS(" ");
-    const b2 = ComptimeWS(" ");
-    const b3 = ComptimeWS(" ");
-    const b4 = ComptimeWS(" ");
-    const b5 = ComptimeWS(" ");
-    const b6 = ComptimeWS(" ");
-    const b7 = ComptimeWS(" ");
-    const b8 = ComptimeWS(" ");
-    const b9 = ComptimeWS(" ");
-    const b10 = ComptimeWS(" ");
-    const b11 = ComptimeWS(" ");
-    const b12 = ComptimeWS(" ");
-    const b13 = ComptimeWS(" ");
-    const b14 = ComptimeWS(" ");
-    const b15 = ComptimeWS(" ");
 
-    pub fn getshellcodeparts() [15][]const u16 {
-        return .{
-            b1,  b2,  b3,  b4,  b5,
-            b6,  b7,  b8,  b9,  b10,
-            b11, b12, b13, b14, b15,
-        };
-    }
-};
+//START HERE
+
+//END HERE
 
 fn concat_shellcode(allocator: std.mem.Allocator) ![]u16 {
     const parts = SH.getshellcodeparts();
