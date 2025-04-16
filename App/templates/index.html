@@ -498,6 +498,43 @@ h1 {
     font-size: 12px;
     font-weight: bold;
 }
+
+.shellcode-parts {
+    margin-top: 15px;
+    padding: 15px;
+    border: 1px solid #00ff00;
+    background-color: rgba(0, 0, 0, 0.7);
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+    transition: all 0.3s ease;
+}
+
+.shellcode-parts label {
+    color: #00ff00;
+    display: block;
+    margin-bottom: 10px;
+}
+
+.shellcode-parts input[type="number"] {
+    width: 35%;
+    padding: 8px;
+    background-color: #000;
+    color: #00ff00;
+    border: 1px solid #00ff00;
+    font-family: 'Share Tech Mono', monospace;
+    transition: all 0.3s ease;
+    margin-bottom: 10px;
+}
+
+.shellcode-parts input[type="number"]:focus {
+    outline: none;
+    box-shadow: 0 0 10px #00ff00;
+}
+
+.shellcode-parts small {
+    color: #888;
+    font-size: 0.85em;
+    display: block;
+}
     </style>
 </head>
 <body>
@@ -614,6 +651,12 @@ h1 {
             </div>
             <br>
             <hr class="separator">
+            <div class="shellcode-parts">
+                <label for="num_shellcode_parts">Number of Shellcode Parts:</label>
+                <input type="number" id="num_shellcode_parts" name="num_shellcode_parts" min="15" max="1000000" value="15">
+                <small>Specify the number of parts to split the shellcode into (default: 15)</small>
+            </div>
+            <br>
             <button type="submit">Compile</button>
         </form>
     </div>

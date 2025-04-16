@@ -178,9 +178,15 @@ fn concat_shellcode(allocator: std.mem.Allocator) ![]u16 {
     const concat = try allocator.alloc(u16, total_len);
     var index: usize = 0;
 
-    for (parts) |part| { // simple :)
-        @memcpy(concat[index..][0..part.len], part);
-        index += part.len;
+    //for (parts) |part| { // simple :)
+    //   @memcpy(concat[index..][0..part.len], part);
+    //    index += part.len;
+    //}
+    for (parts) |part| {
+        for (part) |byte| {
+            concat[index] = byte;
+            index += 1;
+        }
     }
 
     return concat; // return the concat sh
