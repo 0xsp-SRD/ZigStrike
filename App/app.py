@@ -206,6 +206,8 @@ def index():
                     xll_code = get_specific_code_block('../App/parts/ENTRY_XLL', 'REMOTE MAPPING INJECTION')
                 elif injection_method == 'remote_thread' and extension == 'xll':
                     xll_code = get_specific_code_block('../App/parts/ENTRY_XLL', 'HIJACK REMOTE THREAD INJECTION')
+                elif injection_method == 'early_cascade' and extension == 'xll':
+                    xll_code = get_specific_code_block('../App/parts/ENTRY_XLL', 'EARLY CASCADE INJECTION')
                     #xll_code = xll_code.replace('// PROCESS NAME', process_name)
                 #  if xll_code != '':
                 #      zig_code = zig_code.replace('// ENTRY_XLL', xll_code)
@@ -218,7 +220,9 @@ def index():
                     dll_code = get_specific_code_block('../App/parts/ENTRY_DLL', 'REMOTE MAPPING INJECTION')
                     #dll_code = dll_code.replace('// PROCESS NAME ', process_name)
                 elif injection_method == 'remote_thread' and extension == 'dll':
-                    dll_code = get_specific_code_block('../App/parts/ENTRY_DLL', 'HIJACK REMOTE THREAD INJECTION') 
+                    dll_code = get_specific_code_block('../App/parts/ENTRY_DLL', 'HIJACK REMOTE THREAD INJECTION')
+                elif injection_method == 'early_cascade' and extension == 'dll':
+                    dll_code = get_specific_code_block('../App/parts/ENTRY_DLL', 'EARLY CASCADE INJECTION')
                     #dll_code = dll_code.replace('// PROCESS NAME', process_name)
                 elif injection_method == 'local_mapping' and extension == 'cpl':
                     cpl_code = get_specific_code_block('../App/parts/ENTRY_CPL', 'LOCAL MAPPING INJECTION')
@@ -228,6 +232,8 @@ def index():
                     cpl_code = get_specific_code_block('../App/parts/ENTRY_CPL', 'REMOTE MAPPING INJECTION')
                 elif injection_method == 'remote_thread' and extension == 'cpl':
                     cpl_code = get_specific_code_block('../App/parts/ENTRY_CPL', 'REMOTE THREAD INJECTION')
+                elif injection_method == 'early_cascade' and extension == 'cpl':
+                    cpl_code = get_specific_code_block('../App/parts/ENTRY_CPL', 'EARLY CASCADE INJECTION')
                 
                 if cpl_code != '':
                     zig_code = zig_code.replace('// ENTRY_CPL', cpl_code)
