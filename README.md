@@ -35,7 +35,7 @@ ZigStrike is a robust shellcode loader developed in Zig, offering a variety of i
 
 ## Prerequisites
 
-- Zig 0.14.0
+- Zig 0.15.x
 - Ubuntu / Debian 
 - Python 3.x (for the web interface)
 - Flask
