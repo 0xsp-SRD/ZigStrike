@@ -198,7 +198,7 @@ extern "kernel32" fn CreateProcessA(
     lpCurrentDirectory: ?windows.LPCSTR,
     lpStartupInfo: *STARTUPINFOA,
     lpProcessInformation: *windows.PROCESS_INFORMATION,
-) callconv(windows.WINAPI) windows.BOOL;
+) callconv(.winapi) windows.BOOL;
 
 extern "Kernel32" fn CreateFileA(
     lpFileName: windows.LPCSTR,
@@ -208,12 +208,12 @@ extern "Kernel32" fn CreateFileA(
     dwCreationDisposition: windows.DWORD,
     dwFlagsAndAttributes: windows.DWORD,
     hTemplateFile: ?windows.HANDLE,
-) callconv(windows.WINAPI) windows.HANDLE;
+) callconv(.winapi) windows.HANDLE;
 
 extern "Kernel32" fn GetFileSize(
     hFile: windows.HANDLE,
     lpFileSizeHigh: ?*windows.DWORD,
-) callconv(windows.WINAPI) windows.DWORD;
+) callconv(.winapi) windows.DWORD;
 
 extern "Kernel32" fn VirtualAllocEx(
     hProcess: windows.HANDLE,
@@ -221,22 +221,22 @@ extern "Kernel32" fn VirtualAllocEx(
     dwSize: windows.SIZE_T,
     flAllocationType: windows.DWORD,
     flProtect: windows.DWORD,
-) callconv(windows.WINAPI) windows.LPVOID;
+) callconv(.winapi) windows.LPVOID;
 
 extern "Kernel32" fn GetModuleHandleA(
     lpModuleName: windows.LPCSTR,
-) callconv(windows.WINAPI) windows.HMODULE;
+) callconv(.winapi) windows.HMODULE;
 
 extern "Kernel32" fn ResumeThread(
     hThread: windows.HANDLE,
-) callconv(windows.WINAPI) windows.DWORD;
+) callconv(.winapi) windows.DWORD;
 extern "Kernel32" fn WriteProcessMemory(
     hProcess: windows.HANDLE,
     lpBaseAddress: windows.LPCVOID,
     lpBuffer: windows.LPCVOID,
     nSize: windows.SIZE_T,
     lpNumberOfBytesWritten: ?*windows.SIZE_T,
-) callconv(windows.WINAPI) windows.BOOL;
+) callconv(.winapi) windows.BOOL;
 
 extern "Kernel32" fn VirtualProtectEx(
     hProcess: windows.HANDLE,
@@ -244,7 +244,7 @@ extern "Kernel32" fn VirtualProtectEx(
     dwSize: windows.SIZE_T,
     flNewProtect: windows.DWORD,
     lpflOldProtect: ?*windows.DWORD,
-) callconv(windows.WINAPI) windows.BOOL;
+) callconv(.winapi) windows.BOOL;
 
 extern "Kernel32" fn ReadProcessMemory(
     hProcess: windows.HANDLE,
@@ -252,7 +252,7 @@ extern "Kernel32" fn ReadProcessMemory(
     lpBuffer: windows.LPVOID,
     nSize: windows.SIZE_T,
     lpNumberOfBytesRead: ?*windows.SIZE_T,
-) callconv(windows.WINAPI) windows.BOOL;
+) callconv(.winapi) windows.BOOL;
 
 // PE Section Base function
 fn mmPeSectionBase(module_base: PVOID, section_name: [*]const u8) ?PVOID {
