@@ -18,7 +18,7 @@ extern "kernel32" fn CreateFileMappingW(
     dwMaximumSizeHigh: windows.DWORD,
     dwMaximumSizeLow: windows.DWORD,
     lpName: ?[*:0]const u16,
-) callconv(windows.WINAPI) ?windows.HANDLE;
+) callconv(.winapi) ?windows.HANDLE;
 
 extern "kernel32" fn MapViewOfFile(
     hFileMappingObject: windows.HANDLE,
@@ -26,9 +26,9 @@ extern "kernel32" fn MapViewOfFile(
     dwFileOffsetHigh: windows.DWORD,
     dwFileOffsetLow: windows.DWORD,
     dwNumberOfBytesToMap: windows.SIZE_T,
-) callconv(windows.WINAPI) ?*anyopaque;
+) callconv(.winapi) ?*anyopaque;
 
-extern "kernel32" fn CloseHandle(hObject: windows.HANDLE) callconv(windows.WINAPI) windows.BOOL;
+extern "kernel32" fn CloseHandle(hObject: windows.HANDLE) callconv(.winapi) windows.BOOL;
 
 pub fn LocalMapInject(pPayload: [*]const u8, sPayloadSize: usize, ppAddress: *?*anyopaque) bool {
 

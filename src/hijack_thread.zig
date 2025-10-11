@@ -28,23 +28,23 @@ const user32 = struct {
         lpText: [*:0]const u8,
         lpCaption: [*:0]const u8,
         uType: windows.UINT,
-    ) callconv(windows.WINAPI) c_int;
+    ) callconv(.winapi) c_int;
 };
 
 // section external API functions.
 pub extern "kernel32" fn GetThreadContext(
     hThread: HANDLE,
     lpContext: *CONTEXT,
-) callconv(windows.WINAPI) BOOL;
+) callconv(.winapi) BOOL;
 
 pub extern "kernel32" fn SetThreadContext(
     hThread: HANDLE,
     lpContext: *CONTEXT,
-) callconv(windows.WINAPI) BOOL;
+) callconv(.winapi) BOOL;
 
 pub extern "kernel32" fn ResumeThread(
     hThread: HANDLE,
-) callconv(windows.WINAPI) DWORD;
+) callconv(.winapi) DWORD;
 
 pub fn hijackThread(h_thread: HANDLE, payload: []const u8) !bool {
     var old_protection: DWORD = undefined;

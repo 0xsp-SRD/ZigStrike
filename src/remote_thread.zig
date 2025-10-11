@@ -1,7 +1,6 @@
 const std = @import("std");
 const main = @import("main.zig");
 const windows = std.os.windows;
-const WINAPI = windows.WINAPI;
 const HANDLE = windows.HANDLE;
 const DWORD = windows.DWORD;
 const LPVOID = windows.LPVOID;
@@ -12,12 +11,12 @@ const PVOID = windows.PVOID;
 const CREATE_SUSPENDED = 0x00000004;
 const STARTUPINFOW = windows.STARTUPINFOW;
 const PROCESS_INFORMATION = windows.PROCESS_INFORMATION;
-extern "kernel32" fn GetThreadContext(h_thread: HANDLE, lp_context: ?*CONTEXT) callconv(windows.WINAPI) BOOL;
-extern "kernel32" fn SetThreadContext(h_thread: HANDLE, lp_context: ?*CONTEXT) callconv(windows.WINAPI) BOOL;
-extern "kernel32" fn ResumeThread(h_thread: HANDLE) callconv(windows.WINAPI) DWORD;
-extern "kernel32" fn VirtualAllocEx(hProcess: HANDLE, lpAddress: ?LPVOID, dwSize: windows.SIZE_T, flAllocationType: DWORD, flProtect: DWORD) callconv(WINAPI) LPVOID;
-extern "kernel32" fn WriteProcessMemory(hProcess: HANDLE, lpBaseAddress: ?LPVOID, lpBuffer: [*]const u8, nSize: windows.SIZE_T, lpNumberOfBytesWritten: ?*windows.SIZE_T) callconv(WINAPI) BOOL;
-extern "kernel32" fn VirtualProtectEx(hProcess: HANDLE, lpAddress: ?LPVOID, dwSize: windows.SIZE_T, flNewProtect: DWORD, lpflOldProtect: ?*DWORD) callconv(WINAPI) BOOL;
+extern "kernel32" fn GetThreadContext(h_thread: HANDLE, lp_context: ?*CONTEXT) callconv(.winapi) BOOL;
+extern "kernel32" fn SetThreadContext(h_thread: HANDLE, lp_context: ?*CONTEXT) callconv(.winapi) BOOL;
+extern "kernel32" fn ResumeThread(h_thread: HANDLE) callconv(.winapi) DWORD;
+extern "kernel32" fn VirtualAllocEx(hProcess: HANDLE, lpAddress: ?LPVOID, dwSize: windows.SIZE_T, flAllocationType: DWORD, flProtect: DWORD) callconv(.winapi) LPVOID;
+extern "kernel32" fn WriteProcessMemory(hProcess: HANDLE, lpBaseAddress: ?LPVOID, lpBuffer: [*]const u8, nSize: windows.SIZE_T, lpNumberOfBytesWritten: ?*windows.SIZE_T) callconv(.winapi) BOOL;
+extern "kernel32" fn VirtualProtectEx(hProcess: HANDLE, lpAddress: ?LPVOID, dwSize: windows.SIZE_T, flNewProtect: DWORD, lpflOldProtect: ?*DWORD) callconv(.winapi) BOOL;
 //pub extern "kernel32" fn CreateRemoteThread(h_process: HANDLE, lp_thread_attributes: ?*anyopaque, dw_stack_size: DWORD, lp_start_address: LPVOID, lp_parameter: ?*anyopaque, dw_creation_flags: DWORD, lp_thread_id: ?*DWORD) callconv(windows.WINAPI) HANDLE;
 
 pub fn suspended_Process(lp_process_name: ?[*:0]u16, dwProcId: *DWORD, h_process: *HANDLE, h_thread: *HANDLE) !bool {

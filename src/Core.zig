@@ -1,7 +1,7 @@
 const std = @import("std");
 const hlp32 = @import("zigwin32").everything;
 const windows = std.os.windows;
-const WINAPI = windows.WINAPI;
+//const WINAPI = .winapi
 const HANDLE = windows.HANDLE;
 const DWORD = windows.DWORD;
 const BOOL = windows.BOOL;
@@ -15,7 +15,7 @@ pub extern "kernel32" fn CreateFileA(
     dwCreationDisposition: u32,
     dwFlagsAndAttributes: u32,
     hTemplateFile: ?HANDLE,
-) callconv(@import("std").os.windows.WINAPI) ?HANDLE;
+) callconv(.winapi) ?HANDLE;
 
 const NETSETUP_JOIN_STATUS = enum(c_int) {
     NetSetupUnknownStatus = 0,
@@ -28,7 +28,7 @@ pub extern "netapi32" fn NetGetJoinInformation(
     lpServer: ?[*:0]const u16,
     lpNameBuffer: *[*:0]u16,
     BufferType: *NETSETUP_JOIN_STATUS,
-) callconv(WINAPI) windows.DWORD;
+) callconv(.winapi) windows.DWORD;
 
 pub const PROCESSENTRY32W = extern struct {
     dwSize: u32,
@@ -59,12 +59,12 @@ pub const PROCESSENTRY32 = extern struct {
 pub extern "kernel32" fn Process32FirstW(
     hSnapshot: HANDLE,
     lppe: *PROCESSENTRY32W,
-) callconv(WINAPI) BOOL;
+) callconv(.winapi) BOOL;
 
 pub extern "kernel32" fn Process32NextW(
     hSnapshot: HANDLE,
     lppe: *PROCESSENTRY32W,
-) callconv(WINAPI) BOOL;
+) callconv(.winapi) BOOL;
 
 // TPM-related constants
 const TPM_INVALID_HANDLE = @as(HANDLE, @ptrFromInt(0xffffffff));
