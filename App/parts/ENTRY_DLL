@@ -1,5 +1,5 @@
 // LOCAL MAPPING INJECTION 
-pub export fn DllMain(hInstance: windows.HINSTANCE, dwReason: DWORD, lpReserved: ?LPVOID) callconv(WINAPI) BOOL {
+pub export fn DllMain(hInstance: windows.HINSTANCE, dwReason: DWORD, lpReserved: ?LPVOID) callconv(.winapi) BOOL {
     _ = hInstance;
     _ = lpReserved;
     switch (dwReason) {
@@ -18,7 +18,7 @@ pub export fn DllMain(hInstance: windows.HINSTANCE, dwReason: DWORD, lpReserved:
 
 
 // HIJACK THREAD INJECTION
-pub export fn DllMain(hInstance: windows.HINSTANCE, dwReason: DWORD, lpReserved: ?LPVOID) callconv(WINAPI) BOOL {
+pub export fn DllMain(hInstance: windows.HINSTANCE, dwReason: DWORD, lpReserved: ?LPVOID) callconv(.winapi) BOOL {
     _ = hInstance;
     _ = lpReserved;
     switch (dwReason) {
@@ -36,7 +36,7 @@ pub export fn DllMain(hInstance: windows.HINSTANCE, dwReason: DWORD, lpReserved:
 
 
 // HIJACK REMOTE THREAD INJECTION
-pub export fn DllMain(hInstance: windows.HINSTANCE, dwReason: DWORD, lpReserved: ?LPVOID) callconv(WINAPI) BOOL {
+pub export fn DllMain(hInstance: windows.HINSTANCE, dwReason: DWORD, lpReserved: ?LPVOID) callconv(.winapi) BOOL {
     _ = hInstance;
     _ = lpReserved;
     switch (dwReason) {
@@ -55,7 +55,7 @@ pub export fn DllMain(hInstance: windows.HINSTANCE, dwReason: DWORD, lpReserved:
 
 
 // REMOTE MAPPING INJECTION
-pub export fn DllMain(hInstance: windows.HINSTANCE, dwReason: DWORD, lpReserved: ?LPVOID) callconv(WINAPI) BOOL {
+pub export fn DllMain(hInstance: windows.HINSTANCE, dwReason: DWORD, lpReserved: ?LPVOID) callconv(.winapi) BOOL {
     _ = hInstance;
     _ = lpReserved;
     switch (dwReason) {
@@ -73,7 +73,7 @@ pub export fn DllMain(hInstance: windows.HINSTANCE, dwReason: DWORD, lpReserved:
 // END OF REMOTE MAPPING INJECTION
 
 // EARLY CASCADE INJECTION
-pub export fn DllMain(hInstance: windows.HINSTANCE, dwReason: DWORD, lpReserved: ?LPVOID) callconv(WINAPI) BOOL {
+pub export fn DllMain(hInstance: windows.HINSTANCE, dwReason: DWORD, lpReserved: ?LPVOID) callconv(.winapi) BOOL {
     _ = hInstance;
     _ = lpReserved;
     switch (dwReason) {
