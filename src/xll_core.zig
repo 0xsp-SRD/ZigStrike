@@ -29,7 +29,7 @@ const WS_THICKFRAME = 0x00040000;
 const WS_MINIMIZEBOX = 0x00020000;
 const WS_MAXIMIZEBOX = 0x00010000;
 pub const MB_OK = 0x00000000;
-const WNDPROC = *const fn (hWnd: win32.HWND, uMsg: win32.UINT, wParam: win32.WPARAM, lParam: win32.LPARAM) callconv(.C) win32.LRESULT;
+const WNDPROC = *const fn (hWnd: win32.HWND, uMsg: win32.UINT, wParam: win32.WPARAM, lParam: win32.LPARAM) callconv(.c) win32.LRESULT;
 
 const WNDCLASSEXW = extern struct {
     cbSize: win32.UINT,
@@ -54,18 +54,18 @@ const MSG = extern struct {
     pt: win32.POINT,
 };
 // list of APIs calls.
-extern fn CreateWindowExW(dwExStyle: win32.DWORD, lpClassName: [*:0]const u16, lpWindowName: [*:0]const u16, dwStyle: win32.DWORD, x: win32.INT, y: win32.INT, nWidth: win32.INT, nHeight: win32.INT, hWndParent: ?win32.HWND, hMenu: ?win32.HMENU, hInstance: ?win32.HINSTANCE, lpParam: ?win32.LPVOID) callconv(.C) win32.HWND;
-extern fn PostQuitMessage(nExitCode: win32.INT) callconv(.C) win32.LRESULT;
-extern fn DefWindowProcW(hWnd: win32.HWND, uMsg: win32.UINT, wParam: win32.WPARAM, lParam: win32.LPARAM) callconv(.C) win32.LRESULT;
-extern fn IsDlgButtonChecked(hDlg: win32.HWND, nIDButton: win32.INT) callconv(.C) win32.INT;
-extern fn DestroyWindow(hWnd: win32.HWND) callconv(.C) win32.LRESULT;
-extern fn GetMessageW(lpMsg: *MSG, hWnd: ?win32.HWND, wMsgFilterMin: win32.UINT, wMsgFilterMax: win32.UINT) callconv(.C) win32.LRESULT;
-extern fn TranslateMessage(lpMsg: *MSG) callconv(.C) win32.LRESULT;
-extern fn DispatchMessageW(lpMsg: *MSG) callconv(.C) win32.LRESULT;
-extern fn RegisterClassExW(lpWndClass: *const WNDCLASSEXW) callconv(.C) win32.ATOM;
-extern fn GetModuleHandleW(lpModuleName: [*:0]const u16) callconv(.C) win32.HMODULE;
+extern fn CreateWindowExW(dwExStyle: win32.DWORD, lpClassName: [*:0]const u16, lpWindowName: [*:0]const u16, dwStyle: win32.DWORD, x: win32.INT, y: win32.INT, nWidth: win32.INT, nHeight: win32.INT, hWndParent: ?win32.HWND, hMenu: ?win32.HMENU, hInstance: ?win32.HINSTANCE, lpParam: ?win32.LPVOID) callconv(.c) win32.HWND;
+extern fn PostQuitMessage(nExitCode: win32.INT) callconv(.c) win32.LRESULT;
+extern fn DefWindowProcW(hWnd: win32.HWND, uMsg: win32.UINT, wParam: win32.WPARAM, lParam: win32.LPARAM) callconv(.c) win32.LRESULT;
+extern fn IsDlgButtonChecked(hDlg: win32.HWND, nIDButton: win32.INT) callconv(.c) win32.INT;
+extern fn DestroyWindow(hWnd: win32.HWND) callconv(.c) win32.LRESULT;
+extern fn GetMessageW(lpMsg: *MSG, hWnd: ?win32.HWND, wMsgFilterMin: win32.UINT, wMsgFilterMax: win32.UINT) callconv(.c) win32.LRESULT;
+extern fn TranslateMessage(lpMsg: *MSG) callconv(.c) win32.LRESULT;
+extern fn DispatchMessageW(lpMsg: *MSG) callconv(.c) win32.LRESULT;
+extern fn RegisterClassExW(lpWndClass: *const WNDCLASSEXW) callconv(.c) win32.ATOM;
+extern fn GetModuleHandleW(lpModuleName: [*:0]const u16) callconv(.c) win32.HMODULE;
 
-pub extern fn MessageBoxW(hWnd: ?win32.HWND, lpText: [*:0]const u16, lpCaption: [*:0]const u16, uType: win32.UINT) callconv(.C) win32.INT;
+pub extern fn MessageBoxW(hWnd: ?win32.HWND, lpText: [*:0]const u16, lpCaption: [*:0]const u16, uType: win32.UINT) callconv(.c) win32.INT;
 
 pub fn LOWORD(x: win32.WPARAM) win32.WORD {
     return @intCast(x & 0xFFFF);
@@ -74,7 +74,7 @@ pub fn LOWORD(x: win32.WPARAM) win32.WORD {
 pub fn HIWORD(x: win32.WPARAM) win32.WORD {
     return @intCast((x >> 16) & 0xFFFF);
 }
-fn WndProc(hWnd: win32.HWND, uMsg: win32.UINT, wParam: win32.WPARAM, lParam: win32.LPARAM) callconv(.C) win32.LRESULT {
+fn WndProc(hWnd: win32.HWND, uMsg: win32.UINT, wParam: win32.WPARAM, lParam: win32.LPARAM) callconv(.c) win32.LRESULT {
     switch (uMsg) {
         WM_CREATE => {
             _ = CreateWindowExW(0, std.unicode.utf8ToUtf16LeStringLiteral("STATIC"), std.unicode.utf8ToUtf16LeStringLiteral("Do you want to proceed?"), WS_VISIBLE | WS_CHILD, 10, 10, 260, 20, hWnd, @ptrFromInt(ID_STATIC_TEXT), null, null);
