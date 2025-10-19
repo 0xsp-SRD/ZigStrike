@@ -126,7 +126,7 @@ pub fn checkDomainStatus() bool {
     const status = NetGetJoinInformation(null, lpNameBuffer, &njs);
 
     if (status == NERR_Success) {
-        std.debug.print("Domain joined: {s}\n", .{lpNameBuffer});
+       // std.debug.print("Domain joined: {s}\n", .{lpNameBuffer});
         return true;
     } else {
         std.debug.print("Not domain joined\n", .{});
